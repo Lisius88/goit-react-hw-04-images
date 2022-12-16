@@ -1,53 +1,40 @@
-import { Component } from 'react';
 import { GalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { Gallery } from './ImageGallery.styled';
 import { Modal } from 'components/Modal/Modal';
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 
-export class ImageGallery extends Component {
-  state = {
-    showModal: false,
-    modalImageUrl: '',
+export const ImageGallery = ({ images }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState(``);
+
+  const toggleModal = () => {
+    setShowModal(showModal => !showModal);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
-  };
-
-  handleGalleryItemClick = event => {
-    const { images } = this.props;
-
-    this.toggleModal();
-    this.setState({
-      modalImageUrl: images.find(
-        image => image.id === Number(event.currentTarget.id)
-      ).largeImageURL,
-    });
-  };
-
-  render() {
-    const { images } = this.props;
-    return (
-      <Gallery>
-        {images.map(({ id, webformatURL, tags }) => (
-          <GalleryItem
-            smallImg={webformatURL}
-            id={id}
-            tags={tags}
-            key={id}
-            onClick={this.handleGalleryItemClick}
-          />
-        ))}
-        {this.state.showModal && (
-          <Modal
-            imageUrl={this.state.modalImageUrl}
-            onClose={this.toggleModal}
-          />
-        )}
-      </Gallery>
+  const handleGalleryItemClick = event => {
+    toggleModal();
+    setModalImageUrl(
+      images.find(image => image.id === Number(event.currentTarget.id))
+        .largeImageURL
     );
-  }
-}
+  };
+
+  return (
+    <Gallery>
+      {images.map(({ id, webformatURL, tags }) => (
+        <GalleryItem
+          smallImg={webformatURL}
+          id={id}
+          tags={tags}
+          key={id}
+          onClick={handleGalleryItemClick}
+        />
+      ))}
+      {showModal && <Modal imageUrl={modalImageUrl} onClose={toggleModal} />}
+    </Gallery>
+  );
+};
 
 ImageGallery.propTypes = {
   images: PropTypes.arrayOf(
