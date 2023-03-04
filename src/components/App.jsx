@@ -1,18 +1,27 @@
 import { SearchBar } from './SearchBar/SearchBar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from './Loader/Loader';
-import { Button, ButtonPerv } from './Button/Button';
+import { Button } from './Button/Button';
 import toast, { Toaster } from 'react-hot-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 
 export const App = () => {
   const [word, setWord] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
+  const [total, setTotal] = useState(0);
 
   const handleSubmit = value => {
+    if (word !== value) {
+      setResult([]);
+    }
+
+    if (word === value) {
+      return;
+    }
+
     setWord(value);
     setPage(1);
   };
@@ -20,19 +29,13 @@ export const App = () => {
   const onLoadMoreClick = () => {
     setPage(page => page + 1);
   };
-  const onLoadLessClick = () => {
-    setPage(page => page - 1);
-    if (page === 1) {
-    }
-  };
+
   useEffect(() => {
     if (word === '') {
       return;
     }
 
     setLoading(true);
-    setResult(null);
-
     fetch(
       `https://pixabay.com/api/?key=30691958-6af913c4f83636a6243d9d3b7&q=${word}&page=${page}&image_type=photo&orientation=horizontal&per_page=12`
     )
@@ -42,12 +45,12 @@ export const App = () => {
         }
         Promise.reject(new Error('Sorry, something is not OK. Try again'));
       })
-      .then(result => {
-        console.log(result);
-        if (result.hits.length > 0) {
-          setResult(result.hits);
+      .then(data => {
+        if (data.hits.length > 0) {
+          setResult(result => [...result, ...data.hits]);
+          setTotal(total => data.total);
         }
-        if (result.total === 0) {
+        if (data.total === 0) {
           toast.error('Try something else');
         }
       })
@@ -57,6 +60,26 @@ export const App = () => {
       .finally(() => {
         setLoading(false);
       });
+  }, [word, page]);
+
+  useEffect(() => {
+    if (total === 0) {
+      return;
+    }
+    toast.success(`We have ${total} images for you!`);
+  }, [total]);
+
+  useLayoutEffect(() => {
+    if (page < 2) {
+      return;
+    }
+
+    const scrollHeight = 366 * 1.5;
+
+    window.scrollBy({
+      top: scrollHeight,
+      behavior: 'smooth',
+    });
   }, [page, word]);
 
   return (
@@ -66,10 +89,7 @@ export const App = () => {
       {loading && <Loader />}
       {result && <ImageGallery images={result} />}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        {word !== '' && result !== null && page !== 1 && (
-          <ButtonPerv onClick={onLoadLessClick} />
-        )}
-        {word !== '' && result !== null && result.length === 12 && (
+        {word !== '' && result.length !== total && (
           <Button onClick={onLoadMoreClick} />
         )}
       </div>

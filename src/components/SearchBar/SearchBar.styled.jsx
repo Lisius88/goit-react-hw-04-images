@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 
 export const Header = styled.header`
-  margin-bottom: 100px;
+  margin-bottom: 20px;
   top: 0;
   left: 0;
   position: sticky;
